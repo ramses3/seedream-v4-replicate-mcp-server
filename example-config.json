@@ -1,0 +1,247 @@
+{
+  "_comment": "Comprehensive MCP Configuration for SeedDream 3.0 Replicate Server",
+  "_version": "1.0.0",
+  "_instructions": {
+    "setup": "Replace the path below with your actual absolute path to seedream-replicate-server/build/index.js",
+    "Windows": "Use forward slashes like: C:/Users/YourName/Projects/seedream-replicate-server/build/index.js",
+    "macOS_Linux": "Use: /Users/YourName/Projects/seedream-replicate-server/build/index.js",
+    "find_path": "Right-click build/index.js in VS Code and select 'Copy Path'",
+    "get_path_script": "Run 'npm run get-path' to get the exact path automatically"
+  },
+  
+  "mcpServers": {
+    "seedream": {
+      "command": "node",
+      "args": ["/absolute/path/to/seedream-replicate-server/build/index.js"],
+      "env": {
+        "REPLICATE_API_TOKEN": "r8_your_replicate_token_here",
+        "NODE_ENV": "production",
+        "LOG_LEVEL": "info",
+        "MAX_CONCURRENT_REQUESTS": "3",
+        "REQUEST_TIMEOUT": "300000",
+        "IMAGE_STORAGE_PATH": "./images",
+        "ENABLE_CACHING": "true",
+        "CACHE_TTL": "3600"
+      },
+      "disabled": false,
+      "alwaysAllow": [
+        "generate_image"
+      ],
+      "timeout": 300000,
+      "restart": true
+    }
+  },
+  
+  "_alternative_configurations": {
+    "_comment": "Alternative configurations for different deployment scenarios",
+    
+    "development": {
+      "seedream-dev": {
+        "command": "node",
+        "args": ["/absolute/path/to/seedream-replicate-server/build/index.js"],
+        "env": {
+          "REPLICATE_API_TOKEN": "r8_your_replicate_token_here",
+          "NODE_ENV": "development",
+          "LOG_LEVEL": "debug",
+          "ENABLE_DEBUG_LOGGING": "true"
+        },
+        "disabled": false,
+        "alwaysAllow": []
+      }
+    },
+    
+    "npx_deployment": {
+      "_comment": "Use npx for automatic updates and universal deployment",
+      "seedream-npx": {
+        "command": "npx",
+        "args": [
+          "-y",
+          "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git"
+        ],
+        "env": {
+          "REPLICATE_API_TOKEN": "r8_your_replicate_token_here",
+          "NODE_ENV": "production"
+        },
+        "disabled": false,
+        "alwaysAllow": []
+      }
+    },
+    
+    "docker_deployment": {
+      "_comment": "Docker-based deployment configuration",
+      "seedream-docker": {
+        "command": "docker",
+        "args": [
+          "run",
+          "--rm",
+          "-i",
+          "-e", "REPLICATE_API_TOKEN=r8_your_replicate_token_here",
+          "-e", "NODE_ENV=production",
+          "-v", "./data:/app/data",
+          "-v", "./logs:/app/logs",
+          "-v", "./images:/app/images",
+          "seedream-replicate-mcp:latest"
+        ],
+        "disabled": true,
+        "alwaysAllow": []
+      }
+    },
+    
+    "high_performance": {
+      "_comment": "High-performance configuration for heavy usage",
+      "seedream-hp": {
+        "command": "node",
+        "args": [
+          "--max-old-space-size=4096",
+          "/absolute/path/to/seedream-replicate-server/build/index.js"
+        ],
+        "env": {
+          "REPLICATE_API_TOKEN": "r8_your_replicate_token_here",
+          "NODE_ENV": "production",
+          "LOG_LEVEL": "warn",
+          "MAX_CONCURRENT_REQUESTS": "5",
+          "ENABLE_CACHING": "true",
+          "CACHE_TTL": "7200",
+          "MEMORY_LIMIT": "4096"
+        },
+        "disabled": false,
+        "alwaysAllow": [
+          "generate_image"
+        ],
+        "timeout": 600000
+      }
+    }
+  },
+  
+  "_environment_variables": {
+    "_comment": "Complete list of supported environment variables",
+    "required": {
+      "REPLICATE_API_TOKEN": {
+        "description": "Your Replicate API token (starts with r8_)",
+        "example": "r8_abc123...",
+        "required": true
+      }
+    },
+    "optional": {
+      "NODE_ENV": {
+        "description": "Environment mode",
+        "options": ["development", "production", "test"],
+        "default": "production"
+      },
+      "LOG_LEVEL": {
+        "description": "Logging level",
+        "options": ["error", "warn", "info", "debug"],
+        "default": "info"
+      },
+      "MAX_CONCURRENT_REQUESTS": {
+        "description": "Maximum concurrent image generation requests",
+        "type": "number",
+        "default": 3,
+        "range": "1-10"
+      },
+      "REQUEST_TIMEOUT": {
+        "description": "Request timeout in milliseconds",
+        "type": "number",
+        "default": 300000,
+        "range": "30000-600000"
+      },
+      "IMAGE_STORAGE_PATH": {
+        "description": "Local path for storing generated images",
+        "type": "string",
+        "default": "./images"
+      },
+      "ENABLE_CACHING": {
+        "description": "Enable response caching",
+        "type": "boolean",
+        "default": "true"
+      },
+      "CACHE_TTL": {
+        "description": "Cache time-to-live in seconds",
+        "type": "number",
+        "default": 3600
+      },
+      "ENABLE_DEBUG_LOGGING": {
+        "description": "Enable detailed debug logging",
+        "type": "boolean",
+        "default": "false"
+      },
+      "MEMORY_LIMIT": {
+        "description": "Node.js memory limit in MB",
+        "type": "number",
+        "default": 2048
+      }
+    }
+  },
+  
+  "_authentication_examples": {
+    "_comment": "Examples for different authentication methods",
+    "api_key_validation": {
+      "pattern": "^r8_[a-zA-Z0-9]{32,}$",
+      "description": "Replicate API tokens start with 'r8_' followed by 32+ alphanumeric characters"
+    },
+    "environment_file": {
+      "description": "Create a .env file in your project root",
+      "example": "REPLICATE_API_TOKEN=r8_your_token_here"
+    }
+  },
+  
+  "_deployment_options": {
+    "_comment": "Different ways to deploy the MCP server",
+    "local_installation": {
+      "steps": [
+        "git clone https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git",
+        "cd seedream-v3-replicate-mcp-server",
+        "npm install",
+        "npm run build",
+        "npm run get-path  # Get absolute path for configuration"
+      ]
+    },
+    "npx_deployment": {
+      "advantages": [
+        "No local installation required",
+        "Always uses latest version",
+        "Works on any machine with Node.js",
+        "Automatic updates"
+      ],
+      "command": "npx -y https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git"
+    },
+    "docker_deployment": {
+      "steps": [
+        "docker build -t seedream-replicate-mcp .",
+        "docker run -e REPLICATE_API_TOKEN=your_token seedream-replicate-mcp"
+      ]
+    }
+  },
+  
+  "_troubleshooting": {
+    "common_issues": {
+      "server_not_found": {
+        "error": "Server not showing up in MCP client",
+        "solutions": [
+          "Verify the absolute path is correct",
+          "Ensure the build directory exists (run npm run build)",
+          "Check file permissions",
+          "Restart your MCP client after configuration changes"
+        ]
+      },
+      "api_token_error": {
+        "error": "REPLICATE_API_TOKEN environment variable is not set",
+        "solutions": [
+          "Get your API token from https://replicate.com/account",
+          "Add the token to your MCP configuration",
+          "Verify the token format (should start with r8_)",
+          "Check token permissions and credits"
+        ]
+      },
+      "generation_timeout": {
+        "error": "Image generation times out",
+        "solutions": [
+          "Increase timeout value in configuration",
+          "Check your internet connection",
+          "Verify Replicate service status",
+          "Try with a simpler prompt"
+        ]
+      }
+    }
+  }
+}

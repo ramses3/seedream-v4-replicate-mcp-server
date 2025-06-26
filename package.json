@@ -1,0 +1,116 @@
+{
+  "name": "seedream-replicate-server",
+  "version": "0.1.0",
+  "description": "MCP server for generating images using Bytedance's SeedDream 3.0 model via Replicate",
+  "private": true,
+  "type": "module",
+  "bin": "./build/index.js",
+  "files": [
+    "build"
+  ],
+  "scripts": {
+    "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "jest --testPathPattern=tests/unit",
+    "test:integration": "jest --testPathPattern=tests/integration",
+    "test:e2e": "jest --testPathPattern=tests/e2e",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:server": "node test-server.js",
+    "test:mock": "node tests/mock-server.js",
+    "dev": "npm run build && npm run test:server",
+    "dev:watch": "concurrently \"npm run watch\" \"nodemon --watch build test-server.js\"",
+    "lint": "eslint src/**/*.ts tests/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts tests/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts tests/**/*.ts",
+    "get-path": "node get-path.js",
+    "inspector": "npx @modelcontextprotocol/inspector build/index.js",
+    "docker:build": "docker build -t seedream-replicate-mcp .",
+    "docker:run": "docker run -e REPLICATE_API_TOKEN=$REPLICATE_API_TOKEN seedream-replicate-mcp",
+    "health-check": "node tests/health-check.cjs",
+    "benchmark": "node tests/benchmark.js"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "image-generation",
+    "seedream",
+    "bytedance",
+    "replicate",
+    "ai",
+    "text-to-image"
+  ],
+  "author": "SeedDream MCP Server",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server/issues"
+  },
+  "homepage": "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server#readme",
+  "dependencies": {
+    "replicate": "^0.34.1",
+    "@modelcontextprotocol/sdk": "0.6.0",
+    "dotenv": "^16.3.1",
+    "winston": "^3.11.0",
+    "joi": "^17.11.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "rate-limiter-flexible": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.24",
+    "@types/jest": "^29.5.8",
+    "@types/express": "^4.17.21",
+    "@types/cors": "^2.8.17",
+    "typescript": "^5.3.3",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^8.54.0",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "@typescript-eslint/parser": "^6.12.0",
+    "prettier": "^3.1.0",
+    "supertest": "^6.3.3",
+    "nock": "^13.4.0"
+  },
+  "jest": {
+    "preset": "ts-jest",
+    "testEnvironment": "node",
+    "roots": ["<rootDir>/tests"],
+    "testMatch": ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+    "collectCoverageFrom": [
+      "src/**/*.ts",
+      "!src/**/*.d.ts",
+      "!src/types/**/*.ts"
+    ],
+    "coverageDirectory": "coverage",
+    "coverageReporters": ["text", "lcov", "html"],
+    "setupFilesAfterEnv": ["<rootDir>/tests/setup.ts"]
+  },
+  "eslintConfig": {
+    "parser": "@typescript-eslint/parser",
+    "plugins": ["@typescript-eslint"],
+    "extends": [
+      "eslint:recommended",
+      "@typescript-eslint/recommended"
+    ],
+    "rules": {
+      "@typescript-eslint/no-unused-vars": "error",
+      "@typescript-eslint/no-explicit-any": "warn"
+    }
+  },
+  "prettier": {
+    "semi": true,
+    "trailingComma": "es5",
+    "singleQuote": true,
+    "printWidth": 100,
+    "tabWidth": 2
+  }
+}
