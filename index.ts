@@ -1,18 +1,19 @@
 #!/usr/bin/env node
 
 /**
- * SeedDream 3.0 Replicate MCP Server
+ * SeedDream 4.0 Replicate MCP Server
  * 
- * This MCP server provides image generation capabilities using Bytedance's SeedDream 3.0 model
- * via the Replicate platform. SeedDream 3.0 is a bilingual (Chinese and English) text-to-image 
- * model that excels at:
+ * This MCP server provides image generation capabilities using Bytedance's SeedDream 4.0 model
+ * via the Replicate platform. SeedDream 4.0 is an advanced bilingual (Chinese and English) 
+ * text-to-image model that excels at:
  * 
- * - Native 2K high resolution output with various aspect ratios
+ * - High resolution output up to 4K (4096px) with various aspect ratios
+ * - Image-to-image generation with multi-reference support
+ * - Sequential image generation for stories and character variations
  * - Exceptional text layout for visually stunning results
  * - Accurate small and large text generation
  * - Photorealistic portraits with cinematic beauty
- * - Fast generation (3 seconds for 1K images)
- * - Strong instruction following and enhanced aesthetics
+ * - Fast generation with enhanced aesthetics
  */
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
@@ -80,36 +81,39 @@ if (!REPLICATE_API_TOKEN) {
   });
 }
 
-// Valid aspect ratios for SeedDream 3.0 via Replicate
-const VALID_ASPECT_RATIOS = [
-  "1:1", "3:4", "4:3", "16:9", "9:16", "2:3", "3:2", "21:9", "custom"
-] as const;
-
-type AspectRatio = typeof VALID_ASPECT_RATIOS[number];
-
-// Valid sizes for SeedDream 3.0 via Replicate
-const VALID_SIZES = ["small", "regular", "big"] as const;
+// Valid sizes for SeedDream 4.0 via Replicate
+const VALID_SIZES = ["1K", "2K", "4K", "custom"] as const;
 type Size = typeof VALID_SIZES[number];
 
+// Valid aspect ratios for SeedDream 4.0 via Replicate
+const VALID_ASPECT_RATIOS = [
+  "1:1", "3:4", "4:3", "16:9", "9:16", "2:3", "3:2", "21:9", "match_input_image"
+] as const;
+type AspectRatio = typeof VALID_ASPECT_RATIOS[number];
+
+// Valid sequential generation modes
+const VALID_SEQUENTIAL_MODES = ["disabled", "auto"] as const;
+type SequentialMode = typeof VALID_SEQUENTIAL_MODES[number];
+
 /**
- * Interface for SeedDream 3.0 generation parameters via Replicate
+ * Interface for SeedDream 4.0 generation parameters via Replicate
  */
-interface SeedDreamParams {
+interface SeedDream4Params {
   prompt: string;
-  aspect_ratio?: AspectRatio;
   size?: Size;
   width?: number;
   height?: number;
-  guidance_scale?: number;
-  seed?: number;
+  max_images?: number;
+  image_input?: string[];
+  aspect_ratio?: AspectRatio;
+  sequential_image_generation?: SequentialMode;
 }
 
 /**
- * Interface for SeedDream 3.0 API response from Replicate
+ * Interface for SeedDream 4.0 API response from Replicate
  */
-interface SeedDreamResponse {
-  url?: string;
-  urls?: string[];
+interface SeedDream4Response {
+  url(): string;
 }
 
 /**
@@ -155,7 +159,7 @@ async function downloadImage(url: string, filename: string): Promise<string> {
 /**
  * Generate a unique filename for an image
  */
-function generateImageFilename(prompt: string, index: number, seed: number): string {
+function generateImageFilename(prompt: string, index: number, timestamp?: string): string {
   // Create a safe filename from the prompt
   const safePrompt = prompt
     .toLowerCase()
@@ -163,8 +167,8 @@ function generateImageFilename(prompt: string, index: number, seed: number): str
     .replace(/\s+/g, '_')
     .substring(0, 50);
   
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  return `seedream_${safePrompt}_${seed}_${index}_${timestamp}.png`;
+  const timeStr = timestamp || new Date().toISOString().replace(/[:.]/g, '-');
+  return `seedream4_${safePrompt}_${index}_${timeStr}.jpg`;
 }
 
 /**
@@ -172,8 +176,8 @@ function generateImageFilename(prompt: string, index: number, seed: number): str
  */
 const server = new Server(
   {
-    name: "seedream-replicate-server",
-    version: "0.1.0",
+    name: "seedream4-replicate-server",
+    version: "0.2.0",
   },
   {
     capabilities: {
@@ -190,7 +194,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     tools: [
       {
         name: "generate_image",
-        description: "Generate images using Bytedance's SeedDream 3.0 model via Replicate. Supports bilingual prompts (Chinese and English), high-resolution output, and various aspect ratios.",
+        description: "Generate images using Bytedance's SeedDream 4.0 model via Replicate. Supports bilingual prompts (Chinese and English), high-resolution output up to 4K, image-to-image generation, and sequential image generation.",
         inputSchema: {
           type: "object",
           properties: {
@@ -198,44 +202,53 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               type: "string",
               description: "The text prompt used to generate the image. Supports both English and Chinese. Be descriptive for best results."
             },
-            aspect_ratio: {
-              type: "string",
-              enum: VALID_ASPECT_RATIOS,
-              description: "Image aspect ratio. Set to 'custom' to specify width and height.",
-              default: "16:9"
-            },
             size: {
               type: "string",
               enum: VALID_SIZES,
-              description: "Big images will have their longest dimension be 2048px. Small images will have their shortest dimension be 512px. Regular images will always be 1 megapixel. Ignored if aspect ratio is custom.",
-              default: "regular"
+              description: "Image resolution: 1K (1024px), 2K (2048px), 4K (4096px), or 'custom' for specific dimensions.",
+              default: "2K"
             },
             width: {
               type: "integer",
-              description: "Image width (only used when aspect_ratio is 'custom')",
-              minimum: 512,
-              maximum: 2048,
+              description: "Custom image width (only used when size='custom'). Range: 1024-4096 pixels.",
+              minimum: 1024,
+              maximum: 4096,
               default: 2048
             },
             height: {
               type: "integer",
-              description: "Image height (only used when aspect_ratio is 'custom')",
-              minimum: 512,
-              maximum: 2048,
+              description: "Custom image height (only used when size='custom'). Range: 1024-4096 pixels.",
+              minimum: 1024,
+              maximum: 4096,
               default: 2048
             },
-            guidance_scale: {
-              type: "number",
-              description: "Prompt adherence. Higher = more literal.",
-              minimum: 1.0,
-              maximum: 10.0,
-              default: 2.5
-            },
-            seed: {
+            max_images: {
               type: "integer",
-              description: "Random seed to control the stochasticity of image generation. Use the same seed for reproducible results.",
-              minimum: 0,
-              maximum: 2147483647
+              description: "Maximum number of images to generate when sequential_image_generation='auto'. Range: 1-15. Total images (input + generated) cannot exceed 15.",
+              minimum: 1,
+              maximum: 15,
+              default: 1
+            },
+            image_input: {
+              type: "array",
+              items: {
+                type: "string"
+              },
+              description: "Input image URLs for image-to-image generation. List of 1-10 images for single or multi-reference generation.",
+              maxItems: 10,
+              default: []
+            },
+            aspect_ratio: {
+              type: "string",
+              enum: VALID_ASPECT_RATIOS,
+              description: "Image aspect ratio. Only used when size is not 'custom'. Use 'match_input_image' to automatically match the input image's aspect ratio.",
+              default: "match_input_image"
+            },
+            sequential_image_generation: {
+              type: "string",
+              enum: VALID_SEQUENTIAL_MODES,
+              description: "Group image generation mode. 'disabled' generates a single image. 'auto' lets the model decide whether to generate multiple related images (e.g., story scenes, character variations).",
+              default: "disabled"
             }
           },
           required: ["prompt"]
@@ -262,15 +275,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           };
         }
 
-        const params = (request.params.arguments || {}) as unknown as SeedDreamParams;
+        const params = (request.params.arguments || {}) as unknown as SeedDream4Params;
         
         if (!params.prompt || typeof params.prompt !== 'string') {
           throw new Error("Prompt is required and must be a string");
-        }
-
-        // Validate aspect ratio if provided
-        if (params.aspect_ratio && !VALID_ASPECT_RATIOS.includes(params.aspect_ratio)) {
-          throw new Error(`Invalid aspect ratio. Must be one of: ${VALID_ASPECT_RATIOS.join(', ')}`);
         }
 
         // Validate size if provided
@@ -278,110 +286,131 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           throw new Error(`Invalid size. Must be one of: ${VALID_SIZES.join(', ')}`);
         }
 
+        // Validate aspect ratio if provided
+        if (params.aspect_ratio && !VALID_ASPECT_RATIOS.includes(params.aspect_ratio)) {
+          throw new Error(`Invalid aspect ratio. Must be one of: ${VALID_ASPECT_RATIOS.join(', ')}`);
+        }
+
+        // Validate sequential mode if provided
+        if (params.sequential_image_generation && !VALID_SEQUENTIAL_MODES.includes(params.sequential_image_generation)) {
+          throw new Error(`Invalid sequential mode. Must be one of: ${VALID_SEQUENTIAL_MODES.join(', ')}`);
+        }
+
+        // Validate max_images
+        if (params.max_images && (params.max_images < 1 || params.max_images > 15)) {
+          throw new Error("max_images must be between 1 and 15");
+        }
+
+        // Validate image_input array
+        if (params.image_input && params.image_input.length > 10) {
+          throw new Error("image_input can contain at most 10 images");
+        }
+
+        // Validate custom dimensions
+        if (params.size === "custom") {
+          if (params.width && (params.width < 1024 || params.width > 4096)) {
+            throw new Error("width must be between 1024 and 4096 when using custom size");
+          }
+          if (params.height && (params.height < 1024 || params.height > 4096)) {
+            throw new Error("height must be between 1024 and 4096 when using custom size");
+          }
+        }
+
         // Prepare the input payload for Replicate
         const input: any = {
           prompt: params.prompt,
-          aspect_ratio: params.aspect_ratio || "16:9",
-          guidance_scale: params.guidance_scale || 2.5
+          size: params.size || "2K",
+          max_images: params.max_images || 1,
+          image_input: params.image_input || [],
+          aspect_ratio: params.aspect_ratio || "match_input_image",
+          sequential_image_generation: params.sequential_image_generation || "disabled"
         };
 
-        // Add size if not using custom aspect ratio
-        if (params.aspect_ratio !== "custom") {
-          input.size = params.size || "regular";
-        }
-
-        // Add custom dimensions if aspect ratio is custom
-        if (params.aspect_ratio === "custom") {
+        // Add custom dimensions if using custom size
+        if (params.size === "custom") {
           input.width = params.width || 2048;
           input.height = params.height || 2048;
         }
 
-        if (params.seed !== undefined) {
-          input.seed = params.seed;
-        }
-
-        log('info', `Generating image with prompt: "${params.prompt}"`);
+        log('info', `Generating image(s) with prompt: "${params.prompt}"`);
         log('debug', 'Generation parameters', input);
         
         const startTime = Date.now();
         
         try {
-          // Call the SeedDream 3.0 model on Replicate with timeout
+          // Call the SeedDream 4.0 model on Replicate with timeout
           const timeoutPromise = new Promise((_, reject) => {
             setTimeout(() => reject(new Error('Request timeout')), REQUEST_TIMEOUT);
           });
           
-          const generationPromise = replicate.run("bytedance/seedream-3", { input }) as Promise<unknown>;
+          const generationPromise = replicate.run("bytedance/seedream-4", { input }) as Promise<SeedDream4Response[]>;
           
-          const rawOutput = await Promise.race([generationPromise, timeoutPromise]);
-          const output = rawOutput as string;
+          const output = await Promise.race([generationPromise, timeoutPromise]) as SeedDream4Response[];
           
           const generationTime = Date.now() - startTime;
-          log('info', `Image generated successfully in ${generationTime}ms`);
+          log('info', `Image(s) generated successfully in ${generationTime}ms`);
 
-          if (!output) {
-            throw new Error("No image was generated - empty response from Replicate");
+          if (!output || !Array.isArray(output) || output.length === 0) {
+            throw new Error("No images were generated - empty response from Replicate");
           }
 
-          if (typeof output !== 'string' || !output.startsWith('http')) {
-            throw new Error(`Invalid response format from Replicate: ${typeof output}`);
-          }
-
-          // Download image locally
-          log('debug', "Downloading image locally...");
-          const filename = generateImageFilename(params.prompt, 1, input.seed || Math.floor(Math.random() * 1000000));
+          // Download images locally
+          log('debug', `Downloading ${output.length} image(s) locally...`);
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          const downloadedImages: { url: string; localPath: string; index: number }[] = [];
           
-          try {
-            const localPath = await downloadImage(output, filename);
-            log('info', `Image downloaded successfully: ${filename}`);
+          for (let i = 0; i < output.length; i++) {
+            const imageUrl = output[i].url();
+            if (!imageUrl || typeof imageUrl !== 'string' || !imageUrl.startsWith('http')) {
+              log('warn', `Invalid image URL at index ${i}: ${imageUrl}`);
+              continue;
+            }
 
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `✅ Successfully generated image using SeedDream 3.0:
-
-📝 **Generation Details:**
-• Prompt: "${params.prompt}"
-• Aspect Ratio: ${input.aspect_ratio}
-• ${input.size ? `Size: ${input.size}` : `Dimensions: ${input.width}x${input.height}`}
-• Guidance Scale: ${input.guidance_scale}
-• ${input.seed ? `Seed: ${input.seed}` : 'Seed: Random'}
-• Generation Time: ${generationTime}ms
-
-🖼️ **Generated Image:**
-• Local Path: ${localPath}
-• Original URL: ${output}
-
-💾 The image has been downloaded to the local 'images' directory.`
-                }
-              ]
-            };
-          } catch (downloadError) {
-            log('warn', `Failed to download image: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`);
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: `✅ Successfully generated image using SeedDream 3.0:
-
-📝 **Generation Details:**
-• Prompt: "${params.prompt}"
-• Aspect Ratio: ${input.aspect_ratio}
-• ${input.size ? `Size: ${input.size}` : `Dimensions: ${input.width}x${input.height}`}
-• Guidance Scale: ${input.guidance_scale}
-• ${input.seed ? `Seed: ${input.seed}` : 'Seed: Random'}
-• Generation Time: ${generationTime}ms
-
-🖼️ **Generated Image:**
-• Download Failed: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}
-• Original URL: ${output}
-
-🌐 You can access the image directly at the URL above.`
-                }
-              ]
-            };
+            try {
+              const filename = generateImageFilename(params.prompt, i, timestamp);
+              const localPath = await downloadImage(imageUrl, filename);
+              downloadedImages.push({ url: imageUrl, localPath, index: i });
+              log('info', `Image ${i + 1} downloaded successfully: ${filename}`);
+            } catch (downloadError) {
+              log('warn', `Failed to download image ${i + 1}: ${downloadError instanceof Error ? downloadError.message : 'Unknown error'}`);
+              downloadedImages.push({ url: imageUrl, localPath: '', index: i });
+            }
           }
+
+          // Format response
+          const imageDetails = downloadedImages.map(img => {
+            if (img.localPath) {
+              return `• Image ${img.index + 1}: ${img.localPath} (${img.url})`;
+            } else {
+              return `• Image ${img.index + 1}: Download failed - ${img.url}`;
+            }
+          }).join('\n');
+
+          const successfulDownloads = downloadedImages.filter(img => img.localPath).length;
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: `✅ Successfully generated ${output.length} image(s) using SeedDream 4.0:
+
+📝 **Generation Details:**
+• Prompt: "${params.prompt}"
+• Size: ${input.size}${input.size === 'custom' ? ` (${input.width}x${input.height})` : ''}
+• Aspect Ratio: ${input.aspect_ratio}
+• Max Images: ${input.max_images}
+• Sequential Generation: ${input.sequential_image_generation}
+• Input Images: ${input.image_input.length}
+• Generation Time: ${generationTime}ms
+
+🖼️ **Generated Images (${output.length} total, ${successfulDownloads} downloaded):**
+${imageDetails}
+
+💾 ${successfulDownloads > 0 ? 'Images have been downloaded to the local \'images\' directory.' : 'Images are available at the URLs above.'}`
+              }
+            ]
+          };
+
         } catch (apiError) {
           const errorMessage = apiError instanceof Error ? apiError.message : 'Unknown API error';
           log('error', `Replicate API error: ${errorMessage}`);
@@ -394,9 +423,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             helpfulMessage = '\n💡 **Tip:** Check your REPLICATE_API_TOKEN is valid and has sufficient credits.';
           } else if (errorMessage.includes('rate limit')) {
             helpfulMessage = '\n💡 **Tip:** You\'ve hit the rate limit. Please wait a moment before trying again.';
+          } else if (errorMessage.includes('input validation')) {
+            helpfulMessage = '\n💡 **Tip:** Check your input parameters are within valid ranges.';
           }
           
-          throw new Error(`Failed to generate image: ${errorMessage}${helpfulMessage}`);
+          throw new Error(`Failed to generate image(s): ${errorMessage}${helpfulMessage}`);
         }
 
       } catch (error) {
@@ -407,7 +438,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           content: [
             {
               type: "text",
-              text: `❌ **Error generating image:**
+              text: `❌ **Error generating image(s):**
 
 ${errorMessage}
 
@@ -415,9 +446,10 @@ ${errorMessage}
 • Verify your REPLICATE_API_TOKEN is set and valid
 • Check your internet connection
 • Ensure your Replicate account has sufficient credits
+• Verify input parameters are within valid ranges
 • Try a simpler prompt if the error persists
 
-📞 **Need help?** Visit: https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server/issues`
+📞 **Need help?** Visit: https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server/issues`
             }
           ],
           isError: true
@@ -436,7 +468,7 @@ ${errorMessage}
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  log('info', "SeedDream 3.0 Replicate MCP server running on stdio");
+  log('info', "SeedDream 4.0 Replicate MCP server running on stdio");
   log('debug', "Server ready to accept requests");
 }
 

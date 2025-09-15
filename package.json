@@ -1,7 +1,7 @@
 {
-  "name": "seedream-replicate-server",
-  "version": "0.1.0",
-  "description": "MCP server for generating images using Bytedance's SeedDream 3.0 model via Replicate",
+  "name": "seedream4-replicate-server",
+  "version": "1.0.0",
+  "description": "MCP server for generating images using Bytedance's SeedDream 4.0 model via Replicate",
   "private": true,
   "type": "module",
   "bin": "./build/index.js",
@@ -36,22 +36,25 @@
     "mcp",
     "model-context-protocol",
     "image-generation",
-    "seedream",
+    "seedream-4",
+    "seedream4",
     "bytedance",
     "replicate",
     "ai",
-    "text-to-image"
+    "text-to-image",
+    "image-to-image",
+    "sequential-generation"
   ],
-  "author": "SeedDream MCP Server",
+  "author": "SeedDream 4.0 MCP Server",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git"
+    "url": "https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server.git"
   },
   "bugs": {
-    "url": "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server/issues"
+    "url": "https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server/issues"
   },
-  "homepage": "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server#readme",
+  "homepage": "https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server#readme",
   "dependencies": {
     "replicate": "^0.34.1",
     "@modelcontextprotocol/sdk": "0.6.0",
