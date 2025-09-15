@@ -1,10 +1,10 @@
 {
-  "_comment": "Comprehensive MCP Configuration for SeedDream 3.0 Replicate Server",
+  "_comment": "Comprehensive MCP Configuration for SeedDream 4.0 Replicate Server",
   "_version": "1.0.0",
   "_instructions": {
-    "setup": "Replace the path below with your actual absolute path to seedream-replicate-server/build/index.js",
-    "Windows": "Use forward slashes like: C:/Users/YourName/Projects/seedream-replicate-server/build/index.js",
-    "macOS_Linux": "Use: /Users/YourName/Projects/seedream-replicate-server/build/index.js",
+    "setup": "Replace the path below with your actual absolute path to seedream4-replicate-server/build/index.js",
+    "Windows": "Use forward slashes like: C:/Users/YourName/Projects/seedream4-replicate-server/build/index.js",
+    "macOS_Linux": "Use: /Users/YourName/Projects/seedream4-replicate-server/build/index.js",
     "find_path": "Right-click build/index.js in VS Code and select 'Copy Path'",
     "get_path_script": "Run 'npm run get-path' to get the exact path automatically"
   },
@@ -12,7 +12,7 @@
   "mcpServers": {
     "seedream": {
       "command": "node",
-      "args": ["/absolute/path/to/seedream-replicate-server/build/index.js"],
+      "args": ["/absolute/path/to/seedream4-replicate-server/build/index.js"],
       "env": {
         "REPLICATE_API_TOKEN": "r8_your_replicate_token_here",
         "NODE_ENV": "production",
@@ -38,7 +38,7 @@
     "development": {
       "seedream-dev": {
         "command": "node",
-        "args": ["/absolute/path/to/seedream-replicate-server/build/index.js"],
+        "args": ["/absolute/path/to/seedream4-replicate-server/build/index.js"],
         "env": {
           "REPLICATE_API_TOKEN": "r8_your_replicate_token_here",
           "NODE_ENV": "development",
@@ -56,7 +56,7 @@
         "command": "npx",
         "args": [
           "-y",
-          "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git"
+          "https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server.git"
         ],
         "env": {
           "REPLICATE_API_TOKEN": "r8_your_replicate_token_here",
@@ -93,7 +93,7 @@
         "command": "node",
         "args": [
           "--max-old-space-size=4096",
-          "/absolute/path/to/seedream-replicate-server/build/index.js"
+          "/absolute/path/to/seedream4-replicate-server/build/index.js"
         ],
         "env": {
           "REPLICATE_API_TOKEN": "r8_your_replicate_token_here",
@@ -189,8 +189,8 @@
     "_comment": "Different ways to deploy the MCP server",
     "local_installation": {
       "steps": [
-        "git clone https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git",
-        "cd seedream-v3-replicate-mcp-server",
+        "git clone https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server.git",
+        "cd seedream-v4-replicate-mcp-server",
         "npm install",
         "npm run build",
         "npm run get-path  # Get absolute path for configuration"
@@ -203,7 +203,7 @@
         "Works on any machine with Node.js",
         "Automatic updates"
       ],
-      "command": "npx -y https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git"
+      "command": "npx -y https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server.git"
     },
     "docker_deployment": {
       "steps": [

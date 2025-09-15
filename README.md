@@ -1,10 +1,10 @@
-# SeedDream 3.0 Replicate MCP Server
+# SeedDream 4.0 Replicate MCP Server
 
-A Model Context Protocol (MCP) server that provides image generation capabilities using Bytedance's SeedDream 3.0 model via the Replicate platform.
+A Model Context Protocol (MCP) server that provides image generation capabilities using Bytedance's SeedDream 4.0 model via the Replicate platform.
 
 ## Features
 
-SeedDream 3.0 is a bilingual (Chinese and English) text-to-image model that excels at:
+SeedDream 4.0 is a bilingual (Chinese and English) text-to-image model that excels at:
 
 - **Native 2K high resolution output** with various aspect ratios
 - **Exceptional text layout** for visually stunning results
@@ -16,7 +16,7 @@ SeedDream 3.0 is a bilingual (Chinese and English) text-to-image model that exce
 ## Available Tools
 
 ### `generate_image`
-Generate a single image from a text prompt using SeedDream 3.0 via Replicate.
+Generate a single image from a text prompt using SeedDream 4.0 via Replicate.
 
 **Parameters:**
 - `prompt` (required): Text description of the image to generate (supports English and Chinese)
@@ -60,7 +60,7 @@ Add the server to your Claude Desktop configuration file:
       "command": "npx",
       "args": [
         "-y",
-        "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git"
+        "https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server.git"
       ],
       "env": {
         "REPLICATE_API_TOKEN": "r8_your_replicate_token_here"
@@ -82,7 +82,7 @@ Add to your MCP settings file at:
       "command": "npx",
       "args": [
         "-y",
-        "https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git"
+        "https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server.git"
       ],
       "env": {
         "REPLICATE_API_TOKEN": "r8_your_replicate_token_here"
@@ -108,8 +108,8 @@ If you prefer to install locally:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/PierrunoYT/seedream-v3-replicate-mcp-server.git
-   cd seedream-v3-replicate-mcp-server
+   git clone https://github.com/PierrunoYT/seedream-v4-replicate-mcp-server.git
+   cd seedream-v4-replicate-mcp-server
    ```
 
 2. **Install dependencies**
@@ -128,7 +128,7 @@ If you prefer to install locally:
      "mcpServers": {
        "seedream": {
          "command": "node",
-         "args": ["/absolute/path/to/seedream-v3-replicate-mcp-server/build/index.js"],
+         "args": ["/absolute/path/to/seedream-v4-replicate-mcp-server/build/index.js"],
          "env": {
            "REPLICATE_API_TOKEN": "r8_your_replicate_token_here"
          }
@@ -181,7 +181,7 @@ Generate a photorealistic portrait of a person reading a book in a library (guid
 The server returns detailed information about generated images:
 
 ```
-Successfully generated 1 image(s) using SeedDream 3.0:
+Successfully generated 1 image(s) using SeedDream 4.0:
 
 Prompt: "a serene mountain landscape at sunset"
 Aspect Ratio: 1:1
@@ -271,7 +271,7 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 For issues related to:
 - **This MCP server**: Open an issue in this repository
 - **Replicate API**: Contact Replicate support
-- **SeedDream 3.0 model**: Refer to Replicate documentation
+- **SeedDream 4.0 model**: Refer to Replicate documentation
 
 ## Changelog
 
